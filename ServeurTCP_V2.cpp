@@ -5,13 +5,16 @@
 #include <string.h>
 #include <thread>
 #include <fstream>
+
+
+
 using namespace std; 
 
 void handle_client(int new_socket, fstream& fs)
 {
-    string message;
+    string message,messageretour;
 
-    // Receive a message from the client
+    // message reçu
     char buffer[2000];
     if (recv(new_socket, buffer, 2000, 0) < 0)
     {
@@ -21,11 +24,14 @@ void handle_client(int new_socket, fstream& fs)
     message = buffer;
      cout << "Message received: " << message << endl;
 
-    // Send a response to the client
-   message = "j'ai bien reçu"; 
-    write(new_socket, message.c_str(), message.length());
-
     close(new_socket);
+   
+fs.open("resultat.txt",fstream::out | fstream::app);
+fs << message <<endl;
+fs.close();
+
+
+
 }
 
 
@@ -39,7 +45,7 @@ int main()
     fstream fs;
 
 
-    // Create the socket
+    // Creation du socket
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_desc == -1)
     {
@@ -47,12 +53,12 @@ int main()
          return 1;
     }
 
-    // Prepare the socket
+    // Preparatin socket
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(8888);
 
-    // Bind the socket
+    // liaison socket
     if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
          cout << "Liaison échouée" << endl;
@@ -60,10 +66,10 @@ int main()
     }
      cout << "Socket liée" << endl;
 
-    // Listen for connections
+    // Ecoute
     listen(socket_desc, 3);
 
-    // Accept incoming connections
+    // attente connexion 
      cout << "Attente de connections..." << endl;
     c = sizeof(struct sockaddr_in);
     while (true) {
@@ -75,12 +81,11 @@ int main()
         }
         cout << "Nouvelle connexion acceptée" << endl;
 
-        // Create a new thread to handle the client
+        // Creation thread pour chaques clients
         thread t(handle_client, new_socket,ref(fs));
         t.detach();
     }
 
     close(socket_desc);
-
     return 0;
 }
